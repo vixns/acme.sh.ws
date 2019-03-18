@@ -39,13 +39,14 @@ Use a scheduler (cron/chronos/...) to run this command once a day
 
 ## Environment
 
-name | default | description
-BIND_IP | 0.0.0.0 | IP address to bind, you should let the default when using the docker image
-BIND_PORT | 3000 | port to bind
-ACME_SH_PATH | /usr/local/bin/acme.sh | acme.sh binary  path
-WEBROOT_DIR | | webroot dir, no default, optional if you only use dns api
-DEPLOY_HOOK | | value of acme.sh --deploy-hook argument, required
-DRY_RUN | | run in test mode if not empty
+| name | default | description |
+|------|---------|-------------|
+| BIND_IP | 0.0.0.0 | IP address to bind, you should let the default when using the docker image |
+| BIND_PORT | 3000 | port to bind
+| ACME_SH_PATH | /usr/local/bin/acme.sh | acme.sh binary  path
+| WEBROOT_DIR | | webroot dir, no default, optional if you only use dns api
+| DEPLOY_HOOK | | value of acme.sh --deploy-hook argument, required
+| DRY_RUN | | run in test mode if not empty
 
 ## Usage
 
