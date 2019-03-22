@@ -9,12 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 type Cert struct {
 	Names          []string `json:"domains"`
 	DnsApi         string   `json:"dns_api"`
 	ChallengeAlias string   `json:"challenge_alias"`
+	KeyLength      string   `json:"key_length"`
 }
 
 func healthPage(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +45,10 @@ func issueCert(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("ACME_SH_PATH") != "" {
 		acmesh = os.Getenv("ACME_SH_PATH")
 	}
-	cmdargs := []string{acmesh, "--issue", "--keylength", "4096"}
+	if c.KeyLength == "" {
+		c.KeyLength = "4096"
+	}
+	cmdargs := []string{acmesh, "--issue", "--keylength", c.KeyLength}
 	if os.Getenv("DRY_RUN") != "" {
 		cmdargs = append(cmdargs, "--test")
 	}
@@ -69,9 +74,13 @@ func issueCert(w http.ResponseWriter, r *http.Request) {
 	}
 	if os.Getenv("DEPLOY_HOOK") != "" {
 		name := c.Names[0]
-		cmd = exec.Command(acmesh, "--deploy",
-			"-d", name,
-			"--deploy-hook", os.Getenv("DEPLOY_HOOK"))
+		deployargs := []string{acmesh, "--deploy", "--deploy-hook", os.Getenv("DEPLOY_HOOK"), "-d", name}
+		if strings.HasPrefix(c.KeyLength, "ec-") {
+		   deployargs = append(deployargs, "--ecc")
+		}
+
+		cmd = exec.Command(acmesh)
+		cmd.Args = deployargs
 		out, err = cmd.CombinedOutput()
 	}
 	if err != nil {

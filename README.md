@@ -54,7 +54,9 @@ Use a scheduler (cron/chronos/...) to run this command once a day
 
 Your local webserver must be configured to serve `$WEBROOT_DIR/.well-known/challenges` as `http://_all_domains_and_aliases_/.well-known/challenges`.
 
-`curl -XPOST http://localhost:3000 -d '{"domains":["my.domain.com","alias.domain.com","alias2.domain.com"]}'`
+`curl -XPOST http://localhost:3000 -d '{"domains":["my.domain.com","alias.domain.com","alias2.domain.com"],"key_length":"ec-384"}'`
+
+`key_length` valid values are `"4096" `(produce rsa certificates, default), `"ec-256" and `"ec-384"`
 
 ### Issue a certificate using the dns api
 
