@@ -3,18 +3,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
+// Cert struct
 type Cert struct {
 	Names          []string `json:"domains"`
-	DnsApi         string   `json:"dns_api"`
+	DNSAPI         string   `json:"dns_api"`
 	ChallengeAlias string   `json:"challenge_alias"`
 	KeyLength      string   `json:"key_length"`
 }
@@ -41,9 +43,10 @@ func issueCert(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Invalid domain name(s) %v", c)
 		return
 	}
-	acmesh := "/usr/local/bin/acme.sh"
-	if os.Getenv("ACME_SH_PATH") != "" {
-		acmesh = os.Getenv("ACME_SH_PATH")
+	var acmesh string
+	acmesh, ok := os.LookupEnv("ACME_SH_PATH")
+	if !ok {
+		acmesh = "/usr/local/bin/acme.sh"
 	}
 	if c.KeyLength == "" {
 		c.KeyLength = "4096"
@@ -52,10 +55,10 @@ func issueCert(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("DRY_RUN") != "" {
 		cmdargs = append(cmdargs, "--test")
 	}
-	if c.DnsApi == "" {
+	if c.DNSAPI == "" {
 		cmdargs = append(cmdargs, "-w", os.Getenv("WEBROOT_DIR"))
 	} else {
-		cmdargs = append(cmdargs, "--dns", "dns_"+c.DnsApi, "--dnssleep", "60")
+		cmdargs = append(cmdargs, "--dns", "dns_"+c.DNSAPI, "--dnssleep", "60")
 		if c.ChallengeAlias != "" {
 			cmdargs = append(cmdargs, "--challenge-alias", c.ChallengeAlias)
 		}
@@ -76,7 +79,7 @@ func issueCert(w http.ResponseWriter, r *http.Request) {
 		name := c.Names[0]
 		deployargs := []string{acmesh, "--deploy", "--deploy-hook", os.Getenv("DEPLOY_HOOK"), "-d", name}
 		if strings.HasPrefix(c.KeyLength, "ec-") {
-		   deployargs = append(deployargs, "--ecc")
+			deployargs = append(deployargs, "--ecc")
 		}
 
 		cmd = exec.Command(acmesh)
@@ -100,9 +103,10 @@ func deleteCert(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Invalid domain name(s) %v", c)
 		return
 	}
-	acmesh := "/usr/local/bin/acme.sh"
-	if os.Getenv("ACME_SH_PATH") != "" {
-		acmesh = os.Getenv("ACME_SH_PATH")
+	var acmesh string
+	acmesh, ok := os.LookupEnv("ACME_SH_PATH")
+	if !ok {
+		acmesh = "/usr/local/bin/acme.sh"
 	}
 	cmdargs := []string{acmesh, "--remove"}
 	cmd := exec.Command(acmesh)
@@ -125,15 +129,17 @@ func handleRequests() {
 	myRouter.HandleFunc("/", healthPage).Methods("GET")
 	myRouter.HandleFunc("/", issueCert).Methods("POST")
 	myRouter.HandleFunc("/", deleteCert).Methods("DELETE")
-	bind_ip := "0.0.0.0"
-	if os.Getenv("BIND_IP") != "" {
-		bind_ip = os.Getenv("BIND_IP")
+	var bindIP string
+	bindIP, ok := os.LookupEnv("BIND_IP")
+	if !ok {
+		bindIP = "0.0.0.0"
 	}
-	bind_port := "3000"
-	if os.Getenv("BIND_PORT") != "" {
-		bind_port = os.Getenv("BIND_PORT")
+	var bindPort string
+	bindPort, bpok := os.LookupEnv("BIND_PORT")
+	if !bpok {
+		bindPort = "3000"
 	}
-	log.Fatal(http.ListenAndServe(bind_ip+":"+bind_port, myRouter))
+	log.Fatal(http.ListenAndServe(bindIP+":"+bindPort, myRouter))
 }
 
 func main() {
