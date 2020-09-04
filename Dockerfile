@@ -4,7 +4,7 @@ RUN apk add --no-cache git && go get github.com/gorilla/mux && go build -o acme.
 
 FROM neilpang/acme.sh
 
-RUN apk add --no-cache bind-tools
+RUN apk add --no-cache bind-tools bash
 
 ENV WEBROOT_DIR=/webroot \
   DEPLOY_HAPROXY_RELOAD="curl -v http://www.monip.org" \
