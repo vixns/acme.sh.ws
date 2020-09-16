@@ -124,11 +124,32 @@ func deleteCert(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK")
 }
 
+func renewCerts(w http.ResponseWriter, r *http.Request) {
+	var acmesh string
+	acmesh, ok := os.LookupEnv("ACME_SH_PATH")
+	if !ok {
+		acmesh = "/usr/local/bin/acme.sh"
+	}
+	cmdargs := []string{acmesh, "--cron", "-w", os.Getenv("WEBROOT_DIR")}
+	cmd := exec.Command(acmesh)
+	cmd.Args = cmdargs
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "error: %s", out)
+		log.Printf("error: %s\n", out)
+		return
+	}
+	log.Printf("Success: %s\n", out)
+	fmt.Fprintf(w, "Success: %s", out)
+}
+
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", healthPage).Methods("GET")
 	myRouter.HandleFunc("/", issueCert).Methods("POST")
 	myRouter.HandleFunc("/", deleteCert).Methods("DELETE")
+	myRouter.HandleFunc("/renew", renewCerts).Methods("GET")
 	var bindIP string
 	bindIP, ok := os.LookupEnv("BIND_IP")
 	if !ok {
