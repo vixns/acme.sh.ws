@@ -4,12 +4,13 @@ RUN apk add --no-cache git && go get github.com/gorilla/mux && go build -o acme.
 
 FROM neilpang/acme.sh
 
-RUN apk add --no-cache bind-tools bash
+ENV WEBROOT_DIR=/webroot DEPLOY_HOOK=vault_cli FABIO=1 VAULT_VERSION=1.5.3
 
-ENV WEBROOT_DIR=/webroot \
-  DEPLOY_HAPROXY_RELOAD="curl -v http://www.monip.org" \
-  DEPLOY_HAPROXY_PEM_PATH=/certs \
-  DEPLOY_HOOK=haproxy
+RUN apk add --no-cache bind-tools bash unzip && \
+curl -sLO https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip && \
+unzip -q -d /usr/local/bin vault_${VAULT_VERSION}_linux_amd64.zip && rm vault_${VAULT_VERSION}_linux_amd64.zip
 
+
+COPY vault_cli.sh /root/.acme.sh/deploy/vault_cli.sh
 COPY --from=0 /go/acme.sh.ws /bin/acme.sh.ws
 ENTRYPOINT ["/bin/acme.sh.ws"]
