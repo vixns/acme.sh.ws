@@ -4,7 +4,7 @@ RUN apk add --no-cache git && go get github.com/gorilla/mux && go build -o acme.
 
 FROM neilpang/acme.sh
 
-ENV HOME=/root WEBROOT_DIR=/webroot DEPLOY_HOOK=vault_cli FABIO=1 VAULT_VERSION=1.5.3
+ENV HOME=/root WEBROOT_DIR=/webroot DEPLOY_HOOK=haproxy FABIO=1 VAULT_VERSION=1.5.3
 
 RUN apk add --no-cache bind-tools bash unzip && \
 curl -sLO https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip && \
