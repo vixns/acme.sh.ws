@@ -68,4 +68,17 @@ vault_cli_deploy() {
     $VAULT_CMD write "${VAULT_PREFIX}/${_cdomain}/fullchain.pem" value=@"$_cfullchain" || return 1
   fi
 
+  if [ -n "${DEPLOY_VAULT_RELOAD}" ]; then
+    Le_Deploy_vault_reload="${DEPLOY_VAULT_RELOAD}"
+    _savedomainconf Le_Deploy_vault_reload "${Le_Deploy_vault_reload}"
+    eval "${Le_Deploy_vault_reload}"
+    _ret=$?
+    if [ "${_ret}" != "0" ]; then
+      _err "Error code ${_ret} during reload"
+      return ${_ret}
+    else
+      _info "Reload successful"
+    fi   
+  fi
+
 }
