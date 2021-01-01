@@ -144,7 +144,7 @@ func renewCerts(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Success: %s", out)
 }
 
-func list() []byte {
+func list() []string {
 	var acmesh string
 	acmesh, ok := os.LookupEnv("ACME_SH_PATH")
 	if !ok {
@@ -158,15 +158,15 @@ func list() []byte {
 
 	if err != nil {
 		log.Printf("error: %s\n", out)
-		return []byte{}
+		return []string{}
 	}
 
-	return out[1:]
+	return strings.Split(string(out), "\n")[1:]
 }
 
 func listCerts(w http.ResponseWriter, r *http.Request) {
 	for _,b := range list() {
-		fmt.Fprintf(w, string(b))
+		fmt.Fprintf(w, b)
 	}
 }
 
