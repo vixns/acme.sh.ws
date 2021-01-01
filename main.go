@@ -144,12 +144,71 @@ func renewCerts(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Success: %s", out)
 }
 
+func list() []byte {
+	var acmesh string
+	acmesh, ok := os.LookupEnv("ACME_SH_PATH")
+	if !ok {
+		acmesh = "/usr/local/bin/acme.sh"
+	}
+
+	cmdargs := []string{acmesh, "--list", "--listraw"}
+	cmd := exec.Command(acmesh)
+	cmd.Args = cmdargs
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Printf("error: %s\n", out)
+		return []byte{}
+	}
+
+	return out[1:]
+}
+
+func listCerts(w http.ResponseWriter, r *http.Request) {
+	for _,b := range list() {
+		fmt.Fprintf(w, string(b))
+	}
+}
+
+func redeployCerts(w http.ResponseWriter, r *http.Request) {
+	var acmesh string
+	acmesh, ok := os.LookupEnv("ACME_SH_PATH")
+	if !ok {
+		acmesh = "/usr/local/bin/acme.sh"
+	}
+
+	if os.Getenv("DEPLOY_HOOK") != "" {
+		for _, n := range list() {
+			parts := strings.Split(string(n), "|")
+			deployargs := []string{acmesh, "--deploy", "--deploy-hook", os.Getenv("DEPLOY_HOOK"), "-d", parts[0]}
+			if strings.HasPrefix(parts[1], "ec-") {
+				deployargs = append(deployargs, "--ecc")
+			}
+
+			cmd := exec.Command(acmesh)
+			cmd.Args = deployargs
+			out, err := cmd.CombinedOutput()
+
+			if err != nil {
+				w.WriteHeader(500)
+				fmt.Fprintf(w, "error: %s", out)
+				log.Printf("error: %s\n", out)
+				return
+			}
+			log.Printf("Success: %s\n", out)
+			fmt.Fprintf(w, "Success: %s", out)
+		}
+	}
+}
+
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", healthPage).Methods("GET")
 	myRouter.HandleFunc("/", issueCert).Methods("POST")
 	myRouter.HandleFunc("/", deleteCert).Methods("DELETE")
 	myRouter.HandleFunc("/renew", renewCerts).Methods("GET")
+	myRouter.HandleFunc("/redeploy", redeployCerts).Methods("GET")
+	myRouter.HandleFunc("/list", listCerts).Methods("GET")
 	var bindIP string
 	bindIP, ok := os.LookupEnv("BIND_IP")
 	if !ok {
