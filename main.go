@@ -161,12 +161,14 @@ func list() []string {
 		return []string{}
 	}
 
-	return strings.Split(string(out), "\n")[1:]
+	return strings.Split(string(out), "\n")
 }
 
 func listCerts(w http.ResponseWriter, r *http.Request) {
 	for _,b := range list() {
-		fmt.Fprintf(w, b)
+		if strings.Contains(b, "|") {
+			fmt.Fprintf(w, "%s\n", b)
+		}
 	}
 }
 
@@ -178,8 +180,11 @@ func redeployCerts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if os.Getenv("DEPLOY_HOOK") != "" {
-		for _, n := range list() {
+		for _, n := range list()[1:] {
 			parts := strings.Split(string(n), "|")
+			if len(parts) < 2 {
+				continue
+			}
 			deployargs := []string{acmesh, "--deploy", "--deploy-hook", os.Getenv("DEPLOY_HOOK"), "-d", parts[0]}
 			if strings.HasPrefix(parts[1], "ec-") {
 				deployargs = append(deployargs, "--ecc")
