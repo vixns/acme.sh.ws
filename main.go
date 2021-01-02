@@ -211,8 +211,8 @@ func handleRequests() {
 	myRouter.HandleFunc("/", healthPage).Methods("GET")
 	myRouter.HandleFunc("/", issueCert).Methods("POST")
 	myRouter.HandleFunc("/", deleteCert).Methods("DELETE")
-	myRouter.HandleFunc("/renew", renewCerts).Methods("GET")
-	myRouter.HandleFunc("/redeploy", redeployCerts).Methods("GET")
+	myRouter.HandleFunc("/renew", renewCerts).Methods("POST")
+	myRouter.HandleFunc("/redeploy", redeployCerts).Methods("POST")
 	myRouter.HandleFunc("/list", listCerts).Methods("GET")
 	var bindIP string
 	bindIP, ok := os.LookupEnv("BIND_IP")
